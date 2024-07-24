@@ -20,6 +20,11 @@
         "@angular/platform-browser-dynamic": "~18.1.0",
         "@angular/router": "~18.1.0",
         "@nx/angular": "19.5.2",
+        "@types/chroma-js": "^2.4.4",
+        "@types/lodash-es": "^4.17.12",
+        "chroma-js": "^2.4.2",
+        "lodash-es": "^4.17.21",
+        "ngx-mask": "^17.1.8",
         "rxjs": "~7.8.0",
         "tslib": "^2.3.0",
         "zone.js": "~0.14.3"

@@ -1,0 +1,20 @@
+{
+    "name": "header",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "modules/layout/header/src",
+    "prefix": "bb",
+    "projectType": "library",
+    "tags": ["type:layout"],
+    "targets": {
+        "test": {
+            "executor": "@nx/jest:jest",
+            "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+            "options": {
+                "jestConfig": "modules/layout/header/jest.config.ts"
+            }
+        },
+        "lint": {
+            "executor": "@nx/eslint:lint"
+        }
+    }
+}

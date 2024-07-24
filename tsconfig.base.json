@@ -15,7 +15,15 @@
         "skipDefaultLibCheck": true,
         "baseUrl": ".",
         "paths": {
-            "@modules/home": ["modules/home/src/index.ts"]
+            "@modules/home": ["modules/home/src/index.ts"],
+            "@modules/layout/footer": ["modules/layout/footer/src/index.ts"],
+            "@modules/layout/header": ["modules/layout/header/src/index.ts"],
+            "@modules/shared/data-access": [
+                "modules/shared/data-access/src/index.ts"
+            ],
+            "@modules/shared/ui/skeleton": [
+                "modules/shared/ui/skeleton/src/index.ts"
+            ]
         }
     },
     "exclude": ["node_modules", "tmp"]
