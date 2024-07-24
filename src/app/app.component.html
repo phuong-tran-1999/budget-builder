@@ -1,15 +1,15 @@
 <bb-header></bb-header>
 
-<div
-    class="flex px-4 mx-auto max-w-screen-lg w-full h-full sm:px-6 lg:px-8 overflow-auto"
->
-    <div class="w-full mt-8">
-        <router-outlet></router-outlet>
+<div class="w-full h-full overflow-auto">
+    <div class="flex w-full h-full px-4 mx-auto max-w-screen-2xl sm:px-6 lg:px-8">
+        <div class="w-full mt-8">
+            <router-outlet></router-outlet>
+        </div>
     </div>
 </div>
 
 @defer (on viewport) {
-<bb-footer></bb-footer>
+    <bb-footer></bb-footer>
 } @placeholder {
-<bb-skeleton height="100px"></bb-skeleton>
+    <bb-skeleton height="100px"></bb-skeleton>
 }

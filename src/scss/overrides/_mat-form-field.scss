@@ -12,6 +12,20 @@
         display: none;
     }
 
+    .mat-mdc-form-field-infix {
+        padding-top: 8px;
+        padding-bottom: 8px;
+        min-height: auto;
+    }
+
+    .mat-mdc-input-element::placeholder {
+        opacity: 0.3;
+    }
+
+    &.align-right .mat-mdc-input-element {
+        text-align: right;
+    }
+
     .mat-mdc-ripple,
     .mdc-line-ripple {
         display: none;
