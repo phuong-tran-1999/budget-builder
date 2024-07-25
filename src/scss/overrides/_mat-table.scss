@@ -83,7 +83,7 @@
 
     .mat-mdc-header-row th.mat-mdc-header-cell,
     .mat-mdc-header-row td.mat-mdc-header-cell {
-        @apply bg-gray-100;
+        @apply bg-gray-700 text-white;
     }
 
     .mat-mdc-row td.mat-mdc-cell,
@@ -104,7 +104,7 @@
 
         .mat-mdc-footer-cell:not(.editable),
         .mat-mdc-cell:not(.editable) {
-            @apply bg-gray-50 #{!important};
+            @apply bg-gray-100 #{!important};
         }
     }
 

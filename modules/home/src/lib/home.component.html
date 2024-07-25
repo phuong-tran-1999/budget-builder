@@ -7,7 +7,7 @@
             <tr class="mat-mdc-header-row">
                 <th class="mat-mdc-header-cell">
                     <div class="flex gap-x-1">
-                        <mat-form-field appearance="outline" class="w-full inline-form-field">
+                        <mat-form-field appearance="outline" class="w-full inline-form-field contrast">
                             <input
                                 matInput
                                 [matDatepicker]="startDate"
@@ -25,7 +25,7 @@
                             </mat-datepicker>
                         </mat-form-field>
 
-                        <mat-form-field appearance="outline" class="w-full inline-form-field">
+                        <mat-form-field appearance="outline" class="w-full inline-form-field contrast">
                             <input
                                 matInput
                                 [matDatepicker]="endDate"
@@ -53,7 +53,9 @@
         <tbody cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
             <!-- Income -->
             <tr class="mat-mdc-row">
-                <td class="font-semibold mat-mdc-cell sticky-cell" [attr.colspan]="displayedColumns.length">Income</td>
+                <td class="text-xl font-semibold mat-mdc-cell sticky-cell" [attr.colspan]="displayedColumns.length">
+                    Income
+                </td>
             </tr>
 
             @for (
@@ -63,7 +65,7 @@
             ) {
                 <tr class="mat-mdc-row">
                     <td class="mat-mdc-cell editable col-header-cell" [attr.colspan]="displayedColumns.length">
-                        <mat-form-field appearance="outline" class="w-full inline-form-field" cdkFocuInitial>
+                        <mat-form-field appearance="outline" class="w-full inline-form-field text-bold" cdkFocuInitial>
                             <input
                                 type="text"
                                 matInput
@@ -148,7 +150,9 @@
                 <tr class="mat-mdc-row">
                     <td class="mat-mdc-cell sticky-cell">Sub Totals</td>
                     @for (month of months; track $index) {
-                        <td class="mat-mdc-cell align-right">{{ parentCategory.controls.subtotals.value[$index] }}</td>
+                        <td class="mat-mdc-cell align-right">
+                            {{ parentCategory.controls.subtotals.value[$index] | number }}
+                        </td>
                     }
                 </tr>
             }
@@ -165,7 +169,9 @@
             <tr class="font-semibold mat-mdc-row">
                 <td class="mat-mdc-cell col-header-cell">Total Income</td>
                 @for (month of months; track $index) {
-                    <td class="mat-mdc-cell align-right">{{ form.controls.income.controls.total.value[$index] }}</td>
+                    <td class="mat-mdc-cell align-right">
+                        {{ form.controls.income.controls.total.value[$index] | number }}
+                    </td>
                 }
             </tr>
 
@@ -177,7 +183,7 @@
             <!-- Expense -->
             <tr class="mat-mdc-row">
                 <td
-                    class="font-semibold mat-mdc-cell col-header-cell sticky-cell"
+                    class="text-xl font-semibold mat-mdc-cell col-header-cell sticky-cell"
                     [attr.colspan]="displayedColumns.length"
                 >
                     Expense
@@ -191,7 +197,7 @@
             ) {
                 <tr class="mat-mdc-row">
                     <td class="mat-mdc-cell editable col-header-cell" [attr.colspan]="displayedColumns.length">
-                        <mat-form-field appearance="outline" class="w-full inline-form-field">
+                        <mat-form-field appearance="outline" class="w-full inline-form-field text-bold">
                             <input
                                 type="text"
                                 matInput
@@ -276,7 +282,9 @@
                 <tr class="mat-mdc-row">
                     <td class="mat-mdc-cell sticky-cell">Sub Totals</td>
                     @for (month of months; track $index) {
-                        <td class="mat-mdc-cell align-right">{{ parentCategory.controls.subtotals.value[$index] }}</td>
+                        <td class="mat-mdc-cell align-right">
+                            {{ parentCategory.controls.subtotals.value[$index] | number }}
+                        </td>
                     }
                 </tr>
             }
@@ -294,7 +302,7 @@
                 <td class="font-bold mat-mdc-cell col-header-cell">Total Expense</td>
                 @for (month of months; track $index) {
                     <td class="font-bold mat-mdc-cell align-right">
-                        {{ form.controls.expense.controls.total.value[$index] }}
+                        {{ form.controls.expense.controls.total.value[$index] | number }}
                     </td>
                 }
             </tr>
@@ -312,19 +320,23 @@
             <tr class="mat-mdc-row">
                 <td class="font-bold mat-mdc-cell col-header-cell sticky-cell">Profit / Loss</td>
                 @for (month of months; track $index) {
-                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.total.value[$index] }}</td>
+                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.total.value[$index] | number }}</td>
                 }
             </tr>
             <tr class="mat-mdc-row">
                 <td class="font-bold mat-mdc-cell col-header-cell sticky-cell">Opening Balance</td>
                 @for (month of months; track $index) {
-                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.openingBalance.value[$index] }}</td>
+                    <td class="font-bold mat-mdc-cell align-right">
+                        {{ form.controls.openingBalance.value[$index] | number }}
+                    </td>
                 }
             </tr>
             <tr class="mat-mdc-row">
                 <td class="font-bold mat-mdc-cell col-header-cell sticky-cell">Closing Balance</td>
                 @for (month of months; track $index) {
-                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.closingBalance.value[$index] }}</td>
+                    <td class="font-bold mat-mdc-cell align-right">
+                        {{ form.controls.closingBalance.value[$index] | number }}
+                    </td>
                 }
             </tr>
         </tfoot>
