@@ -36,6 +36,33 @@
         }
     }
 
+    &--sticky {
+        thead,
+        tfoot {
+            position: sticky;
+            z-index: 2;
+        }
+
+        // th.sticky-cell,
+        // td.sticky-cell {
+        //     position: sticky;
+        //     left: 0;
+        //     z-index: 2;
+        // }
+
+        thead {
+            top: 0;
+        }
+
+        tfoot {
+            bottom: 0;
+        }
+    }
+
+    .mat-mdc-cell:focus-within {
+        @apply outline outline-1 outline-blue-500;
+    }
+
     tr.mat-mdc-header-row {
         @apply h-10;
 

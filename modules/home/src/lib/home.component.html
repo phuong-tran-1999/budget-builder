@@ -1,23 +1,69 @@
 <div class="h-full overflow-auto">
-    <table class="table mat-mdc-table table--left-border table--editable table--cell-right">
+    <table
+        class="table mat-mdc-table table--left-border table--editable table--cell-right table--sticky"
+        [formGroup]="form"
+    >
         <thead>
             <tr class="mat-mdc-header-row">
-                <th class="mat-mdc-header-cell">Category</th>
-                @for (month of initialMonths; track $index) {
+                <th class="mat-mdc-header-cell">
+                    <div class="flex gap-x-1">
+                        <mat-form-field appearance="outline" class="w-full inline-form-field">
+                            <input
+                                matInput
+                                [matDatepicker]="startDate"
+                                placeholder="Start Date"
+                                formControlName="startDate"
+                                [max]="form.value.endDate"
+                            />
+                            <mat-datepicker-toggle matIconSuffix [for]="startDate"></mat-datepicker-toggle>
+                            <mat-datepicker
+                                #startDate
+                                startView="year"
+                                (monthSelected)="setMonthAndYear($event, startDate, 'startDate')"
+                                panelClass="month-picker"
+                            >
+                            </mat-datepicker>
+                        </mat-form-field>
+
+                        <mat-form-field appearance="outline" class="w-full inline-form-field">
+                            <input
+                                matInput
+                                [matDatepicker]="endDate"
+                                placeholder="End Date"
+                                formControlName="endDate"
+                                [min]="form.value.startDate"
+                            />
+                            <mat-datepicker-toggle matIconSuffix [for]="endDate"></mat-datepicker-toggle>
+                            <mat-datepicker
+                                #endDate
+                                startView="year"
+                                (monthSelected)="setMonthAndYear($event, endDate, 'endDate')"
+                                panelClass="month-picker"
+                            >
+                            </mat-datepicker>
+                        </mat-form-field>
+                    </div>
+                </th>
+                @for (month of months; track $index) {
                     <th class="mat-mdc-header-cell">{{ month.date | date: 'MMM yyyy' }}</th>
                 }
             </tr>
         </thead>
-        <tbody>
+
+        <tbody cdkTrapFocus [cdkTrapFocusAutoCapture]="true">
             <!-- Income -->
             <tr class="mat-mdc-row">
-                <td class="font-semibold mat-mdc-cell" [attr.colspan]="displayedColumns.length">Income</td>
+                <td class="font-semibold mat-mdc-cell sticky-cell" [attr.colspan]="displayedColumns.length">Income</td>
             </tr>
 
-            @for (parentCategory of form.controls.income.controls.groups.controls; track $index) {
+            @for (
+                parentCategory of form.controls.income.controls.groups.controls;
+                track $index;
+                let groupIndex = $index
+            ) {
                 <tr class="mat-mdc-row">
                     <td class="mat-mdc-cell editable col-header-cell" [attr.colspan]="displayedColumns.length">
-                        <mat-form-field appearance="outline" class="w-full inline-form-field">
+                        <mat-form-field appearance="outline" class="w-full inline-form-field" cdkFocuInitial>
                             <input
                                 type="text"
                                 matInput
@@ -29,9 +75,26 @@
                     </td>
                 </tr>
 
-                @for (category of parentCategory.controls.categories.controls; track $index) {
+                @for (
+                    category of parentCategory.controls.categories.controls;
+                    track $index;
+                    let categoryIndex = $index
+                ) {
                     <tr class="mat-mdc-row">
-                        <td class="mat-mdc-cell editable">
+                        <td
+                            class="mat-mdc-cell editable sticky-cell"
+                            [cdkContextMenuTriggerFor]="context_menu"
+                            [cdkContextMenuTriggerData]="{
+                                $implicit: {
+                                    category,
+                                    index: $index,
+                                    categories: parentCategory.controls.categories,
+                                    categoryIndex,
+                                    groups: form.controls.income.controls.groups,
+                                    groupIndex
+                                }
+                            }"
+                        >
                             <mat-form-field appearance="outline" class="w-full inline-form-field">
                                 <input
                                     type="text"
@@ -43,8 +106,21 @@
                             </mat-form-field>
                         </td>
 
-                        @for (month of initialMonths; track $index) {
-                            <td class="mat-mdc-cell editable">
+                        @for (month of months; track $index) {
+                            <td
+                                class="mat-mdc-cell editable"
+                                [cdkContextMenuTriggerFor]="context_menu"
+                                [cdkContextMenuTriggerData]="{
+                                    $implicit: {
+                                        category,
+                                        index: $index,
+                                        categories: parentCategory.controls.categories,
+                                        categoryIndex,
+                                        groups: form.controls.expense.controls.groups,
+                                        groupIndex
+                                    }
+                                }"
+                            >
                                 <mat-form-field appearance="outline" class="w-full inline-form-field align-right">
                                     <input
                                         type="text"
@@ -54,6 +130,14 @@
                                         [allowNegativeNumbers]="true"
                                         [validation]="false"
                                         (keydown.enter)="addCategory(parentCategory.controls.categories)"
+                                        (keydown.control.delete)="
+                                            deleteRow({
+                                                categories: parentCategory.controls.categories,
+                                                categoryIndex,
+                                                groups: form.controls.income.controls.groups,
+                                                groupIndex
+                                            })
+                                        "
                                     />
                                 </mat-form-field>
                             </td>
@@ -62,8 +146,8 @@
                 }
 
                 <tr class="mat-mdc-row">
-                    <td class="mat-mdc-cell">Sub Totals</td>
-                    @for (month of initialMonths; track $index) {
+                    <td class="mat-mdc-cell sticky-cell">Sub Totals</td>
+                    @for (month of months; track $index) {
                         <td class="mat-mdc-cell align-right">{{ parentCategory.controls.subtotals.value[$index] }}</td>
                     }
                 </tr>
@@ -80,7 +164,7 @@
 
             <tr class="font-semibold mat-mdc-row">
                 <td class="mat-mdc-cell col-header-cell">Total Income</td>
-                @for (month of initialMonths; track $index) {
+                @for (month of months; track $index) {
                     <td class="mat-mdc-cell align-right">{{ form.controls.income.controls.total.value[$index] }}</td>
                 }
             </tr>
@@ -92,12 +176,19 @@
 
             <!-- Expense -->
             <tr class="mat-mdc-row">
-                <td class="font-semibold mat-mdc-cell col-header-cell" [attr.colspan]="displayedColumns.length">
+                <td
+                    class="font-semibold mat-mdc-cell col-header-cell sticky-cell"
+                    [attr.colspan]="displayedColumns.length"
+                >
                     Expense
                 </td>
             </tr>
 
-            @for (parentCategory of form.controls.expense.controls.groups.controls; track $index) {
+            @for (
+                parentCategory of form.controls.expense.controls.groups.controls;
+                track $index;
+                let groupIndex = $index
+            ) {
                 <tr class="mat-mdc-row">
                     <td class="mat-mdc-cell editable col-header-cell" [attr.colspan]="displayedColumns.length">
                         <mat-form-field appearance="outline" class="w-full inline-form-field">
@@ -112,9 +203,26 @@
                     </td>
                 </tr>
 
-                @for (category of parentCategory.controls.categories.controls; track $index) {
+                @for (
+                    category of parentCategory.controls.categories.controls;
+                    track $index;
+                    let categoryIndex = $index
+                ) {
                     <tr class="mat-mdc-row">
-                        <td class="mat-mdc-cell editable">
+                        <td
+                            class="mat-mdc-cell editable sticky-cell"
+                            [cdkContextMenuTriggerFor]="context_menu"
+                            [cdkContextMenuTriggerData]="{
+                                $implicit: {
+                                    category,
+                                    index: $index,
+                                    categories: parentCategory.controls.categories,
+                                    categoryIndex,
+                                    groups: form.controls.expense.controls.groups,
+                                    groupIndex
+                                }
+                            }"
+                        >
                             <mat-form-field appearance="outline" class="w-full inline-form-field">
                                 <input
                                     type="text"
@@ -122,12 +230,33 @@
                                     [formControl]="category.controls.name"
                                     placeholder="Category Name.."
                                     (keydown.enter)="addCategory(parentCategory.controls.categories)"
+                                    (keydown.control.delete)="
+                                        deleteRow({
+                                            categories: parentCategory.controls.categories,
+                                            categoryIndex,
+                                            groups: form.controls.income.controls.groups,
+                                            groupIndex
+                                        })
+                                    "
                                 />
                             </mat-form-field>
                         </td>
 
-                        @for (month of initialMonths; track $index) {
-                            <td class="mat-mdc-cell editable">
+                        @for (month of months; track $index) {
+                            <td
+                                class="mat-mdc-cell editable"
+                                [cdkContextMenuTriggerFor]="context_menu"
+                                [cdkContextMenuTriggerData]="{
+                                    $implicit: {
+                                        category,
+                                        index: $index,
+                                        categories: parentCategory.controls.categories,
+                                        categoryIndex,
+                                        groups: form.controls.expense.controls.groups,
+                                        groupIndex
+                                    }
+                                }"
+                            >
                                 <mat-form-field appearance="outline" class="w-full inline-form-field align-right">
                                     <input
                                         type="text"
@@ -145,17 +274,11 @@
                 }
 
                 <tr class="mat-mdc-row">
-                    <td class="mat-mdc-cell">Sub Totals</td>
-                    @for (month of initialMonths; track $index) {
+                    <td class="mat-mdc-cell sticky-cell">Sub Totals</td>
+                    @for (month of months; track $index) {
                         <td class="mat-mdc-cell align-right">{{ parentCategory.controls.subtotals.value[$index] }}</td>
                     }
                 </tr>
-
-                <!-- @if (!$last) {
-                    <tr class="mat-mdc-row custom-height">
-                        <td class="h-4 mat-mdc-cell editable" [attr.colspan]="displayedColumns.length + 1"></td>
-                    </tr>
-                } -->
             }
 
             <tr class="mat-mdc-row">
@@ -167,10 +290,12 @@
                 </td>
             </tr>
 
-            <tr class="font-semibold mat-mdc-row">
-                <td class="mat-mdc-cell col-header-cell">Total Expense</td>
-                @for (month of initialMonths; track $index) {
-                    <td class="mat-mdc-cell align-right">{{ form.controls.expense.controls.total.value[$index] }}</td>
+            <tr class="mat-mdc-row">
+                <td class="font-bold mat-mdc-cell col-header-cell">Total Expense</td>
+                @for (month of months; track $index) {
+                    <td class="font-bold mat-mdc-cell align-right">
+                        {{ form.controls.expense.controls.total.value[$index] }}
+                    </td>
                 }
             </tr>
 
@@ -181,27 +306,36 @@
                     [attr.colspan]="displayedColumns.length + 1"
                 ></td>
             </tr>
-
-            <tr class="font-semibold mat-mdc-row">
-                <td class="mat-mdc-cell col-header-cell">Profit / Loss</td>
-                @for (month of initialMonths; track $index) {
-                    <td class="mat-mdc-cell align-right">{{ form.controls.total.value[$index] }}</td>
-                }
-            </tr>
-            <tr class="font-semibold mat-mdc-row">
-                <td class="mat-mdc-cell col-header-cell">Opening Balance</td>
-                @for (month of initialMonths; track $index) {
-                    <td class="mat-mdc-cell align-right">{{ form.controls.total.value[$index] }}</td>
-                }
-            </tr>
-            <tr class="font-semibold mat-mdc-row">
-                <td class="mat-mdc-cell col-header-cell">Closing Balance</td>
-                @for (month of initialMonths; track $index) {
-                    <td class="mat-mdc-cell align-right">{{ form.controls.total.value[$index] }}</td>
-                }
-            </tr>
         </tbody>
+
+        <tfoot>
+            <tr class="mat-mdc-row">
+                <td class="font-bold mat-mdc-cell col-header-cell sticky-cell">Profit / Loss</td>
+                @for (month of months; track $index) {
+                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.total.value[$index] }}</td>
+                }
+            </tr>
+            <tr class="mat-mdc-row">
+                <td class="font-bold mat-mdc-cell col-header-cell sticky-cell">Opening Balance</td>
+                @for (month of months; track $index) {
+                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.openingBalance.value[$index] }}</td>
+                }
+            </tr>
+            <tr class="mat-mdc-row">
+                <td class="font-bold mat-mdc-cell col-header-cell sticky-cell">Closing Balance</td>
+                @for (month of months; track $index) {
+                    <td class="font-bold mat-mdc-cell align-right">{{ form.controls.closingBalance.value[$index] }}</td>
+                }
+            </tr>
+        </tfoot>
     </table>
+
+    <ng-template #context_menu let-data>
+        <div cdkMenu>
+            <button cdkMenuItem (click)="applyRow(data)">Apply to all</button>
+            <button cdkMenuItem (click)="deleteRow(data)">Delete Row</button>
+        </div>
+    </ng-template>
 
     <!-- Hacky way to get the mat-table css load -->
     <table mat-table class="hidden">

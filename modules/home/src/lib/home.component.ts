@@ -1,22 +1,30 @@
+import { A11yModule, CdkTrapFocus } from '@angular/cdk/a11y';
+import { CdkMenuModule } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormArray, FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MAT_DATE_FORMATS } from '@angular/material/core';
+import { MatDatepicker, MatDatepickerModule } from '@angular/material/datepicker';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
-import { TypeSafeMatCellDefDirective } from '@modules/shared/core';
-import { sum, zip } from 'lodash-es';
+import { MONTHPICKER_FORMATS, TypeSafeMatCellDefDirective } from '@modules/shared/core';
+import { CategoryGroup } from '@modules/shared/data-access';
+import { isNil } from 'lodash-es';
 import { NgxMaskDirective } from 'ngx-mask';
-import { combineLatest, debounceTime, map, startWith } from 'rxjs';
-
-export interface CategoryGroup {
-    name: string;
-    items: string[];
-}
+import { combineLatest, debounceTime, distinctUntilChanged, map, skip, startWith, Subject, takeUntil, tap } from 'rxjs';
+import {
+    _calculateOpeningAndClosingBalance,
+    _flattenAndSubtractColumns,
+    _flattenAndSumColumns,
+    _generateEmptyValues,
+    _initMonths,
+} from './home.util';
 
 @Component({
     selector: 'bb-home',
@@ -31,42 +39,92 @@ export interface CategoryGroup {
         MatTableModule,
         ReactiveFormsModule,
         NgxMaskDirective,
+        CdkMenuModule,
+        MatMenuModule,
+        MatSnackBarModule,
+        A11yModule,
         TypeSafeMatCellDefDirective,
     ],
     templateUrl: './home.component.html',
     styleUrl: './home.component.scss',
+    providers: [
+        {
+            provide: MAT_DATE_FORMATS,
+            useValue: MONTHPICKER_FORMATS,
+        },
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeComponent {
+    trap = viewChild(CdkTrapFocus);
+
     /* Initial values */
     currentYear = new Date().getFullYear();
-    initialStartPeriod = new Date(this.currentYear, 0, 1);
-    initialEndPeriod = new Date(this.currentYear, 11, 31);
-    initialMonths = this._initMonths(this.initialStartPeriod, this.initialEndPeriod);
-    initialMonthValues = this.initialMonths.map((item) => item.value);
+
+    startPeriod = new Date(this.currentYear, 0, 1);
+    endPeriod = new Date(this.currentYear, 11, 31);
+
+    months = _initMonths(this.startPeriod, this.endPeriod);
+    monthValues = this.months.map((item) => item.value);
 
     initGroup: CategoryGroup = { name: '', items: [''] };
-    initialIncomeGroups: CategoryGroup[] = [];
-    initialExpenseGroups: CategoryGroup[] = [];
+    initialIncomeGroups: CategoryGroup[] = [{ name: '', items: [''] }];
+    initialExpenseGroups: CategoryGroup[] = [{ name: '', items: [''] }];
 
     /* Injectables */
     _fb = inject(FormBuilder);
     _cdr = inject(ChangeDetectorRef);
     _destroyRef = inject(DestroyRef);
+    _snackbar = inject(MatSnackBar);
+
+    /* Private properties */
+    _dateUpdate$ = new Subject<void>();
 
     /* Public properties */
     form = this._initForm();
-    displayedColumns: string[] = ['category', ...this.initialMonthValues];
+    displayedColumns: string[] = ['category', ...this.monthValues];
 
     /* Public methods */
     addCategory(array: FormArray) {
-        array.push(this._initCategoryForm('', this.initialMonthValues));
+        array.push(this._initCategoryForm('', this.monthValues));
     }
 
     addGroup(type: 'income' | 'expense') {
-        this.form.controls[type].controls.groups.push(
-            this._initCategoryGroupForm(this.initialMonthValues, this.initGroup),
-        );
+        this.form.controls[type].controls.groups.push(this._initCategoryGroupForm(this.monthValues, this.initGroup));
+
+        // this.trap()?.focusTrap.focusFirstTabbableElement();
+    }
+
+    applyRow(data: { category: FormGroup; index: number }) {
+        const amounts = data.category.get('amounts') as FormArray;
+        const currentValue = amounts.at(data.index).value;
+
+        if (isNil(currentValue)) return;
+
+        amounts.setValue(this.monthValues.map(() => currentValue));
+        this._snackbar.open('Value applied to all months', 'Close', { duration: 2000 });
+    }
+
+    deleteRow(data: { categories: FormArray; categoryIndex: number; groups: FormArray; groupIndex: number }) {
+        data.categories?.removeAt(data.categoryIndex);
+
+        if (data.categories.length === 0) {
+            data.groups?.removeAt(data.groupIndex);
+        }
+        this._snackbar.open('Row removed', 'Close', { duration: 2000 });
+    }
+
+    setMonthAndYear(normalizedMonthAndYear: Date, datepicker: MatDatepicker<Date>, type: 'startDate' | 'endDate') {
+        // TODO: Should use dialog instead
+        if (confirm('Are you sure update date? This action will delete all data')) {
+            this.form.controls[type].patchValue(normalizedMonthAndYear);
+        }
+
+        datepicker.close();
+    }
+
+    _trackByIndex(index: number) {
+        return index;
     }
 
     /* Form Related Methods */
@@ -75,55 +133,81 @@ export class HomeComponent {
         const expenseGroups = [];
 
         for (const group of this.initialExpenseGroups) {
-            const groupForm = this._initCategoryGroupForm(this.initialMonthValues, group);
+            const groupForm = this._initCategoryGroupForm(this.monthValues, group);
             expenseGroups.push(groupForm);
         }
 
         for (const group of this.initialIncomeGroups) {
-            const groupForm = this._initCategoryGroupForm(this.initialMonthValues, group);
+            const groupForm = this._initCategoryGroupForm(this.monthValues, group);
             incomeGroups.push(groupForm);
         }
 
         const form = this._fb.group({
+            startDate: [this.startPeriod],
+            endDate: [this.endPeriod],
             income: this._fb.group({
                 groups: this._fb.array(incomeGroups),
-                total: this._initMonthForm(this.initialMonthValues),
+                total: this._initMonthForm(this.monthValues),
             }),
             expense: this._fb.group({
                 groups: this._fb.array(expenseGroups),
-                total: this._initMonthForm(this.initialMonthValues),
+                total: this._initMonthForm(this.monthValues),
             }),
-            total: this._initMonthForm(this.initialMonthValues),
-            openingBalance: this._initMonthForm(this.initialMonthValues),
-            closingBalance: this._initMonthForm(this.initialMonthValues),
+            total: this._initMonthForm(this.monthValues),
+            openingBalance: this._initMonthForm(this.monthValues),
+            closingBalance: this._initMonthForm(this.monthValues),
         });
 
-        const { income, expense, total, openingBalance, closingBalance } = form.controls;
+        const { income, expense, total, startDate, endDate, openingBalance, closingBalance } = form.controls;
         const { groups: iGroups, total: iTotal } = income.controls;
         const { groups: eGroups, total: eTotal } = expense.controls;
+
+        combineLatest([
+            startDate.valueChanges.pipe(startWith(startDate.value), distinctUntilChanged()),
+            endDate.valueChanges.pipe(startWith(endDate.value), distinctUntilChanged()),
+        ])
+            .pipe(skip(1), takeUntilDestroyed(this._destroyRef))
+            .subscribe((value) => {
+                if (isNil(value[0]) || isNil(value[1])) return;
+                this.startPeriod = value[0];
+                this.endPeriod = value[1];
+                const monthList = _initMonths(value[0], value[1]);
+                this.months = monthList;
+                this.monthValues = monthList.map((item) => item.value);
+                this._dateUpdate$.next();
+                this.form = this._initForm();
+                this._cdr.markForCheck();
+            });
 
         iGroups.valueChanges
             .pipe(
                 debounceTime(150),
-                map((groups) =>
-                    this._flattenAndSumColumns(groups.map((group) => group.subtotals).filter((item) => !!item)),
-                ),
+                map((groups) => _flattenAndSumColumns(groups.map((group) => group.subtotals).filter((item) => !!item))),
+                takeUntil(this._dateUpdate$),
                 takeUntilDestroyed(this._destroyRef),
             )
             .subscribe((total) => {
-                iTotal.setValue(total);
+                if (total.length === 0) {
+                    iTotal.patchValue(_generateEmptyValues(this.monthValues.length));
+                } else {
+                    iTotal.patchValue(total);
+                }
             });
 
         eGroups.valueChanges
             .pipe(
                 debounceTime(150),
-                map((groups) =>
-                    this._flattenAndSumColumns(groups.map((group) => group.subtotals).filter((item) => !!item)),
-                ),
+                tap((groups) => console.log('Groups:', groups)),
+                map((groups) => _flattenAndSumColumns(groups.map((group) => group.subtotals).filter((item) => !!item))),
+                takeUntil(this._dateUpdate$),
                 takeUntilDestroyed(this._destroyRef),
             )
             .subscribe((total) => {
-                eTotal.setValue(total);
+                if (total.length === 0) {
+                    eTotal.patchValue(_generateEmptyValues(this.monthValues.length));
+                } else {
+                    eTotal.patchValue(total);
+                }
             });
 
         combineLatest([
@@ -131,7 +215,8 @@ export class HomeComponent {
             eTotal.valueChanges.pipe(startWith(eTotal.value)),
         ])
             .pipe(
-                map(([iTotal, eTotal]) => this._flattenAndSubtractColumns(iTotal, eTotal)),
+                map(([iTotal, eTotal]) => _flattenAndSubtractColumns(iTotal, eTotal)),
+                takeUntil(this._dateUpdate$),
                 takeUntilDestroyed(this._destroyRef),
             )
             .subscribe((result) => {
@@ -139,11 +224,13 @@ export class HomeComponent {
                 this._cdr.markForCheck();
             });
 
-        // Calculate opening balance
-        // combineLatest([
-        //     total.valueChanges.pipe(startWith(total.value)),
-        //     openingBalance.valueChanges.pipe(startWith(openingBalance.value)),
-        // ]);
+        total.valueChanges
+            .pipe(startWith(total.value), takeUntil(this._dateUpdate$), takeUntilDestroyed(this._destroyRef))
+            .subscribe((value) => {
+                const result = _calculateOpeningAndClosingBalance(value);
+                openingBalance.patchValue(result.openingBalance);
+                closingBalance.patchValue(result.closingBalance);
+            });
 
         return form;
     }
@@ -154,6 +241,7 @@ export class HomeComponent {
 
     _initCategoryForm(name = '', months: string[]) {
         return this._fb.group({
+            // Prevent unnecessary updates
             name: [name, { updateOn: 'submit' }],
             amounts: this._initMonthForm(months),
         });
@@ -177,8 +265,9 @@ export class HomeComponent {
             .pipe(
                 debounceTime(150),
                 map((categories) =>
-                    this._flattenAndSumColumns(categories.map((category) => category.amounts).filter((item) => !!item)),
+                    _flattenAndSumColumns(categories.map((category) => category.amounts).filter((item) => !!item)),
                 ),
+                takeUntil(this._dateUpdate$),
                 takeUntilDestroyed(this._destroyRef),
             )
             .subscribe((value) => {
@@ -186,27 +275,5 @@ export class HomeComponent {
             });
 
         return form;
-    }
-
-    /* Helper Methods */
-    _initMonths(startDate: Date, endDate: Date) {
-        return Array(endDate.getMonth() - startDate.getMonth() + 1)
-            .fill(startDate)
-            .map((date, index) => ({
-                date: new Date(date.getFullYear(), date.getMonth() + index, 1),
-                value: index.toString(),
-            }));
-    }
-
-    _flattenAndSumColumns(matrix: (number | null)[][]) {
-        return zip(...matrix).map((column) => sum(column));
-    }
-
-    _flattenAndSubtractColumns(list: (number | null)[], list2: (number | null)[]) {
-        return zip(list, list2).map(([a, b]) => (a || 0) - (b || 0));
-    }
-
-    _trackByIndex(index: number) {
-        return index;
     }
 }

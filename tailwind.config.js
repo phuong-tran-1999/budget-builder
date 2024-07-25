@@ -1,10 +1,7 @@
 const { createGlobPatternsForDependencies } = require('@nx/angular/tailwind');
 const { join, resolve } = require('path');
 const colors = require('tailwindcss/colors');
-const generatePalette = require(resolve(
-    __dirname,
-    './tools/tailwind/generate-palette'
-));
+const generatePalette = require(resolve(__dirname, './tools/tailwind/generate-palette'));
 
 const customPalettes = {
     primary: generatePalette('#FF0000'),
