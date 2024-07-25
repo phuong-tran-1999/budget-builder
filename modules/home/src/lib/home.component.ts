@@ -1,7 +1,15 @@
 import { A11yModule, CdkTrapFocus } from '@angular/cdk/a11y';
 import { CdkMenuModule } from '@angular/cdk/menu';
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, viewChild } from '@angular/core';
+import {
+    ChangeDetectionStrategy,
+    ChangeDetectorRef,
+    Component,
+    DestroyRef,
+    ElementRef,
+    inject,
+    viewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -62,7 +70,7 @@ export class HomeComponent {
     currentYear = new Date().getFullYear();
 
     startPeriod = new Date(this.currentYear, 0, 1);
-    endPeriod = new Date(this.currentYear, 11, 31);
+    endPeriod = new Date(this.currentYear, 2, 31);
 
     months = _initMonths(this.startPeriod, this.endPeriod);
     monthValues = this.months.map((item) => item.value);
@@ -85,8 +93,14 @@ export class HomeComponent {
     displayedColumns: string[] = ['category', ...this.monthValues];
 
     /* Public methods */
-    addCategory(array: FormArray) {
+    addCategory(array: FormArray, row?: HTMLTableRowElement) {
         array.push(this._initCategoryForm('', this.monthValues));
+
+        if (!row) return;
+
+        setTimeout(() => {
+            row?.nextElementSibling?.querySelector('input')?.focus();
+        }, 0);
     }
 
     addGroup(type: 'income' | 'expense') {
@@ -121,6 +135,37 @@ export class HomeComponent {
         }
 
         datepicker.close();
+    }
+
+    moveHorizontal(direction: 'left' | 'right', cell: HTMLTableCellElement) {
+        if (direction === 'left') {
+            cell.previousElementSibling?.querySelector('input')?.focus();
+        } else {
+            cell.nextElementSibling?.querySelector('input')?.focus();
+        }
+    }
+
+    moveVertical(direction: 'up' | 'down', row: HTMLTableRowElement, index: number) {
+        if (direction === 'up') {
+            const nearestPrevInput = row.previousElementSibling?.querySelectorAll('input');
+            if (nearestPrevInput) {
+                const el = nearestPrevInput[index] ?? nearestPrevInput[0];
+                el.focus();
+                return;
+            }
+
+            // row.parentElement?.querySelectorAll('input')[index]?.focus();
+        } else {
+            const nearestNextInput = row.nextElementSibling?.querySelectorAll('input');
+
+            if (nearestNextInput) {
+                const el = nearestNextInput[index] ?? nearestNextInput[0];
+                el.focus();
+                return;
+            }
+
+            // row.parentElement?.querySelectorAll('input')[index]?.focus();
+        }
     }
 
     _trackByIndex(index: number) {
@@ -197,7 +242,6 @@ export class HomeComponent {
         eGroups.valueChanges
             .pipe(
                 debounceTime(150),
-                tap((groups) => console.log('Groups:', groups)),
                 map((groups) => _flattenAndSumColumns(groups.map((group) => group.subtotals).filter((item) => !!item))),
                 takeUntil(this._dateUpdate$),
                 takeUntilDestroyed(this._destroyRef),

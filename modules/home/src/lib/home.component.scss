@@ -5,3 +5,8 @@
 .col-header-cell {
     min-width: 200px;
 }
+
+a:focus,
+a:active {
+    color: red;
+}

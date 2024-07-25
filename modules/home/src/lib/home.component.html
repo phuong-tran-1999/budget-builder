@@ -63,7 +63,7 @@
                 track $index;
                 let groupIndex = $index
             ) {
-                <tr class="mat-mdc-row">
+                <tr class="mat-mdc-row" #row>
                     <td class="mat-mdc-cell editable col-header-cell" [attr.colspan]="displayedColumns.length">
                         <mat-form-field appearance="outline" class="w-full inline-form-field text-bold" cdkFocuInitial>
                             <input
@@ -72,6 +72,7 @@
                                 [formControl]="parentCategory.controls.name"
                                 placeholder="Parent Category Name.."
                                 (keydown.control.enter)="addGroup('income')"
+                                (keydown.arrowDown)="moveVertical('down', row, 0)"
                             />
                         </mat-form-field>
                     </td>
@@ -82,8 +83,9 @@
                     track $index;
                     let categoryIndex = $index
                 ) {
-                    <tr class="mat-mdc-row">
+                    <tr class="mat-mdc-row" #row>
                         <td
+                            #cell
                             class="mat-mdc-cell editable sticky-cell"
                             [cdkContextMenuTriggerFor]="context_menu"
                             [cdkContextMenuTriggerData]="{
@@ -103,13 +105,25 @@
                                     matInput
                                     [formControl]="category.controls.name"
                                     placeholder="Category Name.."
-                                    (keydown.enter)="addCategory(parentCategory.controls.categories)"
+                                    (keydown.enter)="addCategory(parentCategory.controls.categories, row)"
+                                    (keydown.arrowDown)="moveVertical('down', row, 0)"
+                                    (keydown.arrowUp)="moveVertical('up', row, 0)"
+                                    (keydown.arrowRight)="moveHorizontal('right', cell)"
+                                    (keydown.control.delete)="
+                                        deleteRow({
+                                            categories: parentCategory.controls.categories,
+                                            categoryIndex,
+                                            groups: form.controls.expense.controls.groups,
+                                            groupIndex
+                                        })
+                                    "
                                 />
                             </mat-form-field>
                         </td>
 
                         @for (month of months; track $index) {
                             <td
+                                #cell
                                 class="mat-mdc-cell editable"
                                 [cdkContextMenuTriggerFor]="context_menu"
                                 [cdkContextMenuTriggerData]="{
@@ -118,7 +132,7 @@
                                         index: $index,
                                         categories: parentCategory.controls.categories,
                                         categoryIndex,
-                                        groups: form.controls.expense.controls.groups,
+                                        groups: form.controls.income.controls.groups,
                                         groupIndex
                                     }
                                 }"
@@ -131,7 +145,11 @@
                                         mask="separator.2"
                                         [allowNegativeNumbers]="true"
                                         [validation]="false"
-                                        (keydown.enter)="addCategory(parentCategory.controls.categories)"
+                                        (keydown.enter)="addCategory(parentCategory.controls.categories, row)"
+                                        (keydown.arrowDown)="moveVertical('down', row, $index + 1)"
+                                        (keydown.arrowUp)="moveVertical('up', row, $index + 1)"
+                                        (keydown.arrowLeft)="moveHorizontal('left', cell)"
+                                        (keydown.arrowRight)="moveHorizontal('right', cell)"
                                         (keydown.control.delete)="
                                             deleteRow({
                                                 categories: parentCategory.controls.categories,
@@ -195,7 +213,7 @@
                 track $index;
                 let groupIndex = $index
             ) {
-                <tr class="mat-mdc-row">
+                <tr class="mat-mdc-row" #row>
                     <td class="mat-mdc-cell editable col-header-cell" [attr.colspan]="displayedColumns.length">
                         <mat-form-field appearance="outline" class="w-full inline-form-field text-bold">
                             <input
@@ -204,6 +222,7 @@
                                 [formControl]="parentCategory.controls.name"
                                 placeholder="Parent Category Name.."
                                 (keydown.control.enter)="addGroup('expense')"
+                                (keydown.arrowDown)="moveVertical('down', row, 0)"
                             />
                         </mat-form-field>
                     </td>
@@ -214,8 +233,9 @@
                     track $index;
                     let categoryIndex = $index
                 ) {
-                    <tr class="mat-mdc-row">
+                    <tr class="mat-mdc-row" #row>
                         <td
+                            #cell
                             class="mat-mdc-cell editable sticky-cell"
                             [cdkContextMenuTriggerFor]="context_menu"
                             [cdkContextMenuTriggerData]="{
@@ -235,12 +255,15 @@
                                     matInput
                                     [formControl]="category.controls.name"
                                     placeholder="Category Name.."
-                                    (keydown.enter)="addCategory(parentCategory.controls.categories)"
+                                    (keydown.arrowDown)="moveVertical('down', row, 0)"
+                                    (keydown.arrowUp)="moveVertical('up', row, 0)"
+                                    (keydown.enter)="addCategory(parentCategory.controls.categories, row)"
+                                    (keydown.arrowRight)="moveHorizontal('right', cell)"
                                     (keydown.control.delete)="
                                         deleteRow({
                                             categories: parentCategory.controls.categories,
                                             categoryIndex,
-                                            groups: form.controls.income.controls.groups,
+                                            groups: form.controls.expense.controls.groups,
                                             groupIndex
                                         })
                                     "
@@ -250,6 +273,7 @@
 
                         @for (month of months; track $index) {
                             <td
+                                #cell
                                 class="mat-mdc-cell editable"
                                 [cdkContextMenuTriggerFor]="context_menu"
                                 [cdkContextMenuTriggerData]="{
@@ -271,7 +295,11 @@
                                         mask="separator.2"
                                         [allowNegativeNumbers]="true"
                                         [validation]="false"
-                                        (keydown.enter)="addCategory(parentCategory.controls.categories)"
+                                        (keydown.arrowDown)="moveVertical('down', row, $index + 1)"
+                                        (keydown.arrowUp)="moveVertical('up', row, $index + 1)"
+                                        (keydown.arrowLeft)="moveHorizontal('left', cell)"
+                                        (keydown.arrowRight)="moveHorizontal('right', cell)"
+                                        (keydown.enter)="addCategory(parentCategory.controls.categories, row)"
                                     />
                                 </mat-form-field>
                             </td>
