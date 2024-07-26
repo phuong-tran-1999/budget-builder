@@ -110,6 +110,10 @@
 
     .mat-mdc-row.custom-height {
         @apply h-auto;
+
+        .mat-mdc-cell {
+            @apply bg-white #{!important};
+        }
     }
 
     .mat-column-action {

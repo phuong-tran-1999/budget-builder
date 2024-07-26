@@ -175,6 +175,10 @@
                 </tr>
             }
 
+            <tr class="mat-mdc-row custom-height">
+                <td class="h-4 mat-mdc-cell" [attr.colspan]="displayedColumns.length"></td>
+            </tr>
+
             <tr class="mat-mdc-row">
                 <td class="mat-mdc-cell" [attr.colspan]="displayedColumns.length">
                     <div class="flex items-center gap-2 cursor-pointer opacity-60" (click)="addGroup('income')">
@@ -184,8 +188,12 @@
                 </td>
             </tr>
 
+            <tr class="mat-mdc-row custom-height">
+                <td class="h-4 mat-mdc-cell" [attr.colspan]="displayedColumns.length"></td>
+            </tr>
+
             <tr class="font-semibold mat-mdc-row">
-                <td class="mat-mdc-cell col-header-cell">Total Income</td>
+                <td class="font-bold mat-mdc-cell col-header-cell">Total Income</td>
                 @for (month of months; track $index) {
                     <td class="mat-mdc-cell align-right">
                         {{ form.controls.income.controls.total.value[$index] | number }}
@@ -195,7 +203,7 @@
 
             <!-- Separator -->
             <tr class="mat-mdc-row custom-height">
-                <td class="h-10 mat-mdc-cell editable" [attr.colspan]="displayedColumns.length + 1"></td>
+                <td class="h-10 mat-mdc-cell" [attr.colspan]="displayedColumns.length + 1"></td>
             </tr>
 
             <!-- Expense -->
@@ -317,6 +325,10 @@
                 </tr>
             }
 
+            <tr class="mat-mdc-row custom-height">
+                <td class="h-4 mat-mdc-cell" [attr.colspan]="displayedColumns.length"></td>
+            </tr>
+
             <tr class="mat-mdc-row">
                 <td class="mat-mdc-cell col-header-cell" [attr.colspan]="displayedColumns.length">
                     <div class="flex items-center gap-2 cursor-pointer opacity-60" (click)="addGroup('expense')">
@@ -324,6 +336,10 @@
                         <span>Add New Parent Category</span>
                     </div>
                 </td>
+            </tr>
+
+            <tr class="mat-mdc-row custom-height">
+                <td class="h-4 mat-mdc-cell" [attr.colspan]="displayedColumns.length"></td>
             </tr>
 
             <tr class="mat-mdc-row">

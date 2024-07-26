@@ -70,7 +70,7 @@ export class HomeComponent {
     currentYear = new Date().getFullYear();
 
     startPeriod = new Date(this.currentYear, 0, 1);
-    endPeriod = new Date(this.currentYear, 2, 31);
+    endPeriod = new Date(this.currentYear, 11, 31);
 
     months = _initMonths(this.startPeriod, this.endPeriod);
     monthValues = this.months.map((item) => item.value);
